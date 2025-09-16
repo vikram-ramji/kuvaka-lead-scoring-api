@@ -18,3 +18,13 @@ export const Lead = z.object({
 });
 
 export type Lead = z.infer<typeof Lead>;
+
+export const AiScoreResponse = z
+  .object({
+    name: z.string(),
+    intent: z.enum(["High", "Medium", "Low"]),
+    reasoning: z.string(),
+  })
+  .array();
+
+export type AiScoreResponse = z.infer<typeof AiScoreResponse>;
