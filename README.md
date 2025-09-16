@@ -102,22 +102,39 @@ Example Response:
 
 ## Scoring Logic
 
-The final score is a combination of a rule-based layer and an AI-powered layer.
+The lead scoring pipeline is designed as a dual-layer system to balance speed, cost, and accuracy. It combines a fast, deterministic **Rule Layer** with a nuanced, context-aware **AI Layer**. The final score is a sum of the points from both layers, providing a comprehensive view of lead quality.
 
-### Rule Layer (0–50 pts)
+### Layer 1: Rule-Based Scoring (0-50 Points)
 
-- Role relevance: decision maker (+20), influencer (+10), else 0
-- Industry match: exact ICP (+20), adjacent (+10), else 0
-- Data completeness: all fields present (+10)
+This layer acts as a rapid, low-cost filter to evaluate leads against explicit, well-defined criteria. It's implemented as a pure function for predictable and easily testable logic.
 
-### AI Layer (0–50 pts)
+| Category           | Criteria                                                            | Points | Rationale                                                                    |
+| ------------------ | ------------------------------------------------------------------- | :----: | ---------------------------------------------------------------------------- |
+| **Role Relevance** | Role contains keywords like `Head`, `VP`, `Director`, `CEO`         |  +20   | Identifies a clear decision-maker with budget authority.                     |
+|                    | Role contains keywords like `Manager`, `Lead`, `Senior`             |  +10   | Identifies a potential influencer who can champion the product internally.   |
+| **Industry Match** | Lead's industry is an exact match for the offer's `ideal_use_cases` |  +20   | Strongest signal of product-market fit.                                      |
+|                    | Lead's industry is a partial match (e.g., "SaaS" vs "B2B SaaS")     |  +10   | Indicates potential relevance and adjacent market opportunities.             |
+| **Data Quality**   | All fields in the lead's CSV row are present and non-empty          |  +10   | A complete profile suggests higher-quality data and a more engaged prospect. |
 
-- Gemini prompt: Classifies lead intent (High/Medium/Low) and provides reasoning (1–2 sentences).
-- Points Awarded: High → 50 pts, Medium → 30 pts, Low → 10 pts
+---
 
-Final Score
-The final score is calculated as follows:
-final_score = rule_score + ai_points
+### Layer 2: AI-Powered Intent Analysis (0-50 Points)
+
+This layer provides a deeper, qualitative analysis that rules alone cannot capture. It uses the `gemini-1.5-flash` model to understand the nuance of a lead's role and bio in the context of the specific product offer.
+
+1. **Persona Assignment:** The prompt begins by instructing the model to act as a `lead qualification assistant`, setting the context for the task.
+2. **Contextual Grounding:** It is fed the complete `offer` details (name, value props, use cases) and the `lead`'s professional data. This grounds the model's analysis in the specific scenario.
+3. **Constrained Task:** The model is explicitly told to classify intent into one of three categories: `High`, `Medium`, or `Low`. This prevents ambiguous or unstructured text responses.
+4. **Forced Justification:** It is required to provide a brief `reasoning` for its classification, forcing it to "show its work" and providing valuable qualitative insight.
+5. **Strict Output Formatting:** The prompt commands the model to return **only a valid JSON array** that conforms to a predefined schema. This is the most critical instruction, ensuring the response is machine-readable and can be safely parsed and validated by the service.
+
+The model's categorical output is then mapped to a numerical score:
+
+- `High` Intent → **50 points**
+- `Medium` Intent → **30 points**
+- `Low` Intent → **10 points**
+
+This AI-driven score captures subtle signals—like specific achievements in a LinkedIn bio or the alignment of a role's responsibilities with the product's value proposition—that the rigid rule layer would miss.
 
 ## Tech Stack
 
@@ -129,9 +146,4 @@ final_score = rule_score + ai_points
 
 ## Example Lead CSV
 
-```bash
-name,role,company,industry,location,linkedin_bio
-Ava Patel,Head of Growth,FlowMetrics,B2B SaaS,San Francisco,"10+ years scaling SaaS GTM teams"
-Lily Chen,Marketing Manager,DataCloud,B2B SaaS,New York,"Focused on demand generation and ABM campaigns"
-David Kim,CTO,HealthNext,Healthcare,Boston,"Background in healthtech platforms"
-```
+Provided in the folder for testing
