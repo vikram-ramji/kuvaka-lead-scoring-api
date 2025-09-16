@@ -7,3 +7,16 @@ export const Offer = z.object({
 });
 
 export type TOffer = z.infer<typeof Offer>;
+
+export const Leads = z
+  .object({
+    name: z.string(),
+    role: z.string(),
+    company: z.string(),
+    industry: z.string(),
+    location: z.string(),
+    linkedin_bio: z.string(),
+  })
+  .array();
+
+export type TLeads = z.infer<typeof Leads>;
