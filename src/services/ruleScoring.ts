@@ -1,4 +1,4 @@
-import { Lead, Offer } from "#types/index.js";
+import { Lead, Offer } from "../types/index.js";
 import { keyof } from "zod";
 
 export const ruleScore = (lead: Lead, offer: Offer): number => {

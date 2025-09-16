@@ -1,6 +1,6 @@
-import { AiScoreResponse, Lead, Offer } from "#types/index.js";
 import { GoogleGenAI } from "@google/genai";
 import z from "zod";
+import { AiScoreResponse, Lead, Offer } from "../types/index.js";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 

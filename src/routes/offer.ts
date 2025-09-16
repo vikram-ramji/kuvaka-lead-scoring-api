@@ -1,4 +1,4 @@
-import { Offer } from "#types/index.js";
+import { Offer } from "../types/index.js";
 import { Router, Request, Response } from "express";
 
 const router = Router();

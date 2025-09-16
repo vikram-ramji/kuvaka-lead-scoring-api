@@ -1,7 +1,7 @@
-import leadsRouter from "#routes/leads.js";
-import offerRouter from "#routes/offer.js";
-import resultsRouter from "#routes/results.js";
-import scoreRouter from "#routes/score.js";
+import leadsRouter from "./routes/leads.js";
+import offerRouter from "./routes/offer.js";
+import resultsRouter from "./routes/results.js";
+import scoreRouter from "./routes/score.js";
 import express from "express";
 
 const app = express();

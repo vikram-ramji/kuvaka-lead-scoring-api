@@ -1,10 +1,10 @@
 import { Router, Response } from "express";
 import { getOffer } from "./offer.js";
 import { getLeads } from "./leads.js";
-import { ruleScore } from "#services/ruleScoring.js";
-import chunk from "#utils/chunk.js";
-import { AiScoreResponse, Results } from "#types/index.js";
-import { aiScore } from "#services/aiScoring.js";
+import { ruleScore } from "../services/ruleScoring.js";
+import chunk from "../utils/chunk.js";
+import { AiScoreResponse, Results } from "../types/index.js";
+import { aiScore } from "../services/aiScoring.js";
 
 const router = Router();
 let results: Results;
