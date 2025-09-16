@@ -1,3 +1,4 @@
+// Custom Error class extending default Error class
 class AppError extends Error {
   public statusCode: number;
   public status: string;

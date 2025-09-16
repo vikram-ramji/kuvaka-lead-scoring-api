@@ -8,10 +8,23 @@ import { aiScore } from "../services/aiScoring.js";
 import AppError from "../utils/AppError.js";
 
 const router = Router();
+
+/**
+ * In-memory storage for the final scoring results.
+ * WARNING: This is not production-ready. In a real application, this should be a database or a cache like Redis.
+ * Data will be lost on server restart and is not shared across multiple server instances.
+ */
 let results: Results;
 
+/**
+ * POST /score
+ * Triggers the main lead scoring pipeline and
+ * stores the results in memory for retrieval via
+ * the GET /results endpoint.
+ */
 router.post("/", async (req, res: Response, next: NextFunction) => {
   try {
+    // Fetches the currently loaded offer and leads from memory.
     const offer = getOffer();
     const leads = getLeads();
 
@@ -24,11 +37,13 @@ router.post("/", async (req, res: Response, next: NextFunction) => {
       );
     }
 
+    // Applies the deterministic rule-based scoring to each lead.
     const ruleResults = leads.map((lead) => ({
       ...lead,
       rule_points: ruleScore(lead, offer),
     }));
 
+    // Batches the leads and sends them to the AI scoring service.
     const BATCH_SIZE = 5;
     const batched = chunk(leads, BATCH_SIZE);
 
@@ -38,6 +53,7 @@ router.post("/", async (req, res: Response, next: NextFunction) => {
       aiResults = aiResults.concat(batchRes);
     }
 
+    // Combines the rule and AI scores into a final result set.
     results = ruleResults.map((lead) => {
       const aiItem = aiResults.find((r) => r.name === lead.name);
 
@@ -48,6 +64,7 @@ router.post("/", async (req, res: Response, next: NextFunction) => {
         );
       }
 
+      // Map the AI's categorical intent ("High", "Medium", "Low") to a numerical score.
       const ai_points =
         aiItem.intent === "High" ? 50 : aiItem.intent === "Medium" ? 30 : 10;
 
@@ -69,5 +86,10 @@ router.post("/", async (req, res: Response, next: NextFunction) => {
   }
 });
 
-export const getResults = () => results;
+/**
+ * Retrieves the stored scoring results.
+ * This is a simple getter for the in-memory 'results' variable.
+ * @returns The array of results, or undefined if scoring has not been run.
+ */
+export const getResults = (): Results | undefined => results;
 export default router;
