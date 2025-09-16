@@ -11,6 +11,3 @@
 
 # OS generated files
 .DS_Store
-
-# Test coverage
-/coverage
