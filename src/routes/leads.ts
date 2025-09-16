@@ -2,19 +2,12 @@ import { Lead } from "#types/index.js";
 import { Router, Request, Response } from "express";
 import { parse } from "csv-parse/sync";
 import multer from "multer";
+import { keyof } from "zod";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 let leads: Lead[];
-
-const EXPECTED_HEADERS = [
-  "name",
-  "role",
-  "company",
-  "industry",
-  "location",
-  "linkedin_bio",
-];
+const fields = keyof(Lead).options;
 
 router.post("/upload", upload.single("file"), (req: Request, res: Response) => {
   if (!req.file) return res.json({ message: "No file uploaded" });
@@ -28,9 +21,7 @@ router.post("/upload", upload.single("file"), (req: Request, res: Response) => {
   const parsedHeaders = Object.keys(records[0] || {}).map((h) =>
     h.trim().toLowerCase(),
   );
-  const missingHeaders = EXPECTED_HEADERS.filter(
-    (h) => !parsedHeaders.includes(h),
-  );
+  const missingHeaders = fields.filter((h) => !parsedHeaders.includes(h));
   if (missingHeaders.length > 0) {
     return res.status(400).json({
       error: `Missing required fields: ${missingHeaders.join(", ")}`,
