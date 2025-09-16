@@ -1,23 +1,27 @@
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import { getOffer } from "./offer.js";
 import { getLeads } from "./leads.js";
 import { ruleScore } from "../services/ruleScoring.js";
 import chunk from "../utils/chunk.js";
 import { AiScoreResponse, Results } from "../types/index.js";
 import { aiScore } from "../services/aiScoring.js";
+import AppError from "../utils/AppError.js";
 
 const router = Router();
 let results: Results;
 
-router.post("/", async (req, res: Response) => {
+router.post("/", async (req, res: Response, next: NextFunction) => {
   try {
     const offer = getOffer();
     const leads = getLeads();
 
     if (!offer || !leads) {
-      return res
-        .status(400)
-        .json({ message: "Offer and leads must be uploaded first." });
+      return next(
+        new AppError(
+          "Prerequisites not met. Please upload offer and leads first.",
+          400,
+        ),
+      );
     }
 
     const ruleResults = leads.map((lead) => ({
@@ -38,7 +42,10 @@ router.post("/", async (req, res: Response) => {
       const aiItem = aiResults.find((r) => r.name === lead.name);
 
       if (!aiItem) {
-        throw new Error(`Missing AI result for lead: ${lead.name}`);
+        throw new AppError(
+          `Internal data mismatch: Missing AI result for lead '${lead.name}'. Please try again.`,
+          500,
+        );
       }
 
       const ai_points =
@@ -58,8 +65,7 @@ router.post("/", async (req, res: Response) => {
       message: "Scoring completed. Use GET /results to fetch results.",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error scoring leads" });
+    next(err);
   }
 });
 

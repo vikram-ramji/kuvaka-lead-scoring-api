@@ -1,8 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import z from "zod";
 import { AiScoreResponse, Lead, Offer } from "../types/index.js";
+import AppError from "../utils/AppError.js";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error("FATAL: GEMINI_API_KEY environment variable is not set.");
+}
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
@@ -23,34 +27,50 @@ export const aiScore = async (
     Prospects:
     ${leads.map((lead, index) => `${index + 1}. ${JSON.stringify(lead)}`).join("\n")}
 
-    Return only a JSON array where each item has {name, intent, reasoning} where name refers to the lead item's name.
+    Return only a valid JSON array where each item has {name, intent, reasoning}. The "name" must exactly match one of the prospect names provided. The "intent" must be one of "High", "Medium", or "Low".
   `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: z.toJSONSchema(AiScoreResponse, {
-        target: "openapi-3.0",
-      }),
-    },
-  });
-
-  const raw = response.data ?? response.text;
-  console.log(raw);
-  if (typeof raw !== "string") {
-    throw new Error("Expected JSON string in response");
-  }
-
-  let parsed;
   try {
-    parsed = JSON.parse(raw);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: z.toJSONSchema(AiScoreResponse, {
+          target: "openapi-3.0",
+        }),
+      },
+    });
+
+    const responseData = response.data ?? response.text;
+    console.log(responseData);
+    if (typeof responseData !== "string") {
+      throw new AppError("The AI service returned a malformed response.", 502);
+    }
+
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(responseData);
+    } catch {
+      throw new AppError("The AI service returned a malformed response.", 502);
+    }
+
+    const validationResult = AiScoreResponse.safeParse(parsedResponse);
+
+    if (!validationResult.success) {
+      console.error(
+        "AI service response failed validation:",
+        validationResult.error.issues,
+      );
+      throw new AppError(
+        "The AI service response did not match the required format.",
+        502,
+      );
+    }
+
+    return validationResult.data;
   } catch (err) {
-    throw new Error("Failed to parse JSON: " + err);
+    console.error("Error calling Gemini API:", err);
+    throw new AppError("The AI scoring service is currently unavailable.", 502);
   }
-
-  const validated = AiScoreResponse.parse(parsed);
-
-  return validated;
 };
