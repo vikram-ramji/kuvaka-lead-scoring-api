@@ -28,3 +28,16 @@ export const AiScoreResponse = z
   .array();
 
 export type AiScoreResponse = z.infer<typeof AiScoreResponse>;
+
+export const Results = z
+  .object({
+    name: z.string(),
+    role: z.string(),
+    company: z.string(),
+    intent: z.enum(["High", "Medium", "Low"]),
+    score: z.number(),
+    reasoning: z.string(),
+  })
+  .array();
+
+export type Results = z.infer<typeof Results>;
