@@ -6,17 +6,15 @@ export const Offer = z.object({
   ideal_use_cases: z.string().array(),
 });
 
-export type TOffer = z.infer<typeof Offer>;
+export type Offer = z.infer<typeof Offer>;
 
-export const Leads = z
-  .object({
-    name: z.string(),
-    role: z.string(),
-    company: z.string(),
-    industry: z.string(),
-    location: z.string(),
-    linkedin_bio: z.string(),
-  })
-  .array();
+export const Lead = z.object({
+  name: z.string(),
+  role: z.string(),
+  company: z.string(),
+  industry: z.string(),
+  location: z.string(),
+  linkedin_bio: z.string(),
+});
 
-export type TLeads = z.infer<typeof Leads>;
+export type Lead = z.infer<typeof Lead>;

@@ -1,11 +1,11 @@
-import { TLeads } from "#types/index.js";
+import { Lead } from "#types/index.js";
 import { Router, Request, Response } from "express";
 import { parse } from "csv-parse/sync";
 import multer from "multer";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
-let leads: TLeads;
+let leads: Lead[];
 
 const EXPECTED_HEADERS = [
   "name",

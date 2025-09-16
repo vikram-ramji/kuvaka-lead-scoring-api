@@ -1,8 +1,8 @@
-import { Offer, TOffer } from "#types/index.js";
+import { Offer } from "#types/index.js";
 import { Router, Request, Response } from "express";
 
 const router = Router();
-let offer: TOffer;
+let offer: Offer;
 
 router.post("/", (req: Request, res: Response) => {
   const body = req.body;
